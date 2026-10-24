@@ -1,7 +1,7 @@
 {
-  "name": "template-electron",
+  "name": "auto-proshow-studio",
   "version": "1.0.0",
-  "description": "Minimal Electron + Remotion template",
+  "description": "Local Windows slideshow editor",
   "main": ".vite/build/main.js",
   "engines": {
     "node": "^20.19.0 || ^22.13.0 || >=24"
@@ -12,37 +12,49 @@
     "studio": "remotion studio",
     "build": "electron-forge package",
     "package": "electron-forge package",
-    "render": "remotion render HelloWorld",
+    "render": "tsx scripts/smoke-render.ts",
     "upgrade": "remotion upgrade",
-    "lint": "eslint . --ignore-pattern .vite --ignore-pattern out && tsc --noEmit"
+    "lint": "eslint . --ignore-pattern .vite --ignore-pattern out --ignore-pattern release && tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "package:win": "electron-forge package --platform=win32 --arch=x64",
+    "smoke:render": "tsx scripts/smoke-render.ts",
+    "smoke:app": "node scripts/dev-smoke.mjs",
+    "format": "prettier --write src remotion scripts tests docs *.md *.json *.ts *.mjs index.html",
+    "package:portable": "node scripts/package-portable.mjs",
+    "zip:portable": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/zip-portable.ps1",
+    "probe:gpu": "tsx scripts/probe-nvenc.ts"
   },
   "repository": {},
   "license": "UNLICENSED",
   "dependencies": {
-    "@remotion/bundler": "^4.0.0",
-    "@remotion/cli": "^4.0.0",
-    "@remotion/renderer": "^4.0.0",
+    "@remotion/bundler": "4.0.538",
+    "@remotion/cli": "4.0.538",
+    "@remotion/player": "4.0.538",
+    "@remotion/renderer": "4.0.538",
+    "@remotion/transitions": "4.0.538",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "remotion": "^4.0.0",
+    "remotion": "4.0.538",
     "scheduler": "0.27.0",
-    "ws": "8.21.0"
+    "ws": "8.21.0",
+    "zod": "3.25.76"
   },
   "optionalDependencies": {
-    "@remotion/compositor-darwin-arm64": "^4.0.0",
-    "@remotion/compositor-darwin-x64": "^4.0.0",
-    "@remotion/compositor-linux-arm64-gnu": "^4.0.0",
-    "@remotion/compositor-linux-arm64-musl": "^4.0.0",
-    "@remotion/compositor-linux-x64-gnu": "^4.0.0",
-    "@remotion/compositor-linux-x64-musl": "^4.0.0",
-    "@remotion/compositor-win32-x64-msvc": "^4.0.0"
+    "@remotion/compositor-darwin-arm64": "4.0.538",
+    "@remotion/compositor-darwin-x64": "4.0.538",
+    "@remotion/compositor-linux-arm64-gnu": "4.0.538",
+    "@remotion/compositor-linux-arm64-musl": "4.0.538",
+    "@remotion/compositor-linux-x64-gnu": "4.0.538",
+    "@remotion/compositor-linux-x64-musl": "4.0.538",
+    "@remotion/compositor-win32-x64-msvc": "4.0.538"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.1",
     "@electron-forge/plugin-vite": "7.11.1",
-    "@remotion/eslint-config-flat": "^4.0.0",
+    "@remotion/eslint-config-flat": "4.0.538",
     "@tailwindcss/postcss": "4.2.1",
-    "@types/node": "20.12.14",
+    "@types/node": "24.19.2",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@types/web": "0.0.166",
@@ -51,6 +63,7 @@
     "eslint": "10.12.0",
     "prettier": "3.8.1",
     "tailwindcss": "4.2.1",
+    "tsx": "4.21.0",
     "typescript": "5.9.3",
     "vite": "6.4.4"
   }

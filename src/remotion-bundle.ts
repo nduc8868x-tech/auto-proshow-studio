@@ -1,8 +1,8 @@
-import {existsSync} from "node:fs";
-import {rm} from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import path from "node:path";
-import type {BundleOptions} from "@remotion/bundler";
-import type {RenderUpdate} from "./electron-api";
+import type { BundleOptions } from "@remotion/bundler";
+import type { RenderUpdate } from "./electron-api";
 
 export const PREBUILT_REMOTION_BUNDLE_DIR = "remotion-bundle";
 type BundleProgress = Parameters<NonNullable<BundleOptions["onProgress"]>>[0];
@@ -24,10 +24,10 @@ export const bundleRemotionProject = async ({
   outDir?: string;
   onUpdate?: (update: RenderUpdate) => void;
 }) => {
-  const {bundle} = await import("@remotion/bundler");
+  const { bundle } = await import("@remotion/bundler");
 
   if (outDir) {
-    await rm(outDir, {recursive: true, force: true});
+    await rm(outDir, { recursive: true, force: true });
   }
 
   return bundle({

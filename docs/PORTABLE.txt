@@ -1,0 +1,46 @@
+AUTO PROSHOW STUDIO - Windows 10/11 x64
+Extract/copy this ENTIRE folder, then run auto-proshow-studio.exe.
+Keep resources, browser and DLL files together; do not copy only the EXE.
+No separate Node.js, FFmpeg or Chrome installation is expected.
+
+Import AVIF/JPG/JPEG/PNG/WebP/GIF/BMP/ICO/SVG photos and one MP3/WAV voice.
+Each import reports successful and failed file counts. Unsupported HEIC/TIFF must be converted.
+Scroll the right sidebar to Title & Logo: enable the white strip, edit title, choose/replace logo.
+Use Edit Position above the preview to drag the strip or resize its corner handle.
+The sidebar also has X/Y, width/height, font size and top/middle/bottom presets.
+Motion speed: global 0.00x-10.00x, default 3.00x for NEW projects; 0 stops motion.
+New projects default to blurred-photo background. Existing saved settings are preserved.
+Drag photos left/right on the timeline; the purple marker shows the insertion position.
+Subscribe templates: below the timeline, position the playhead and click '+ Mau Subscribe'.
+The supplied animated GIF is built in; green background is removed automatically.
+Drag the Subscribe clip to move it in time; drag its right edge to resize its duration.
+Select a clip to edit start/duration, X/Y and size, loop or delete it.
+All Subscribe clips share one timeline row. Use the clip selector for overlapping clips.
+Select a clip, click Copy, position the playhead by clicking empty track space, then Paste at playhead.
+Ctrl+C / Ctrl+V work while focused in the Subscribe editor, except inside text/number inputs.
+Copies keep geometry, loop and duration, trim to video end and save as independent clips.
+The internal copy buffer belongs to the current project and resets when switching projects.
+After numeric edits click 'Luu chinh sua' (Save changes).
+'Nhap GIF khac' imports another GIF; green removal can be turned off for it.
+GIF timing is frame-synchronized in preview and export. No loop holds the last frame until clip end.
+Decoded transparent frames are stored inside the project; keep the full portable folder.
+Select a photo and enable its own speed to override the global value.
+Motion speed changes pan/zoom travel without changing photo, voice or video duration.
+Project Manager uses compact horizontal rows: name, duration, created/updated time and actions.
+Search/sort, open/new, rename and delete remain available.
+Deletion asks for confirmation and moves the entire project folder to the Recycle Bin.
+Source files and exported videos OUTSIDE the project folder are kept.
+Cancel queued/active exports for a project before deleting it.
+Add each project to the export queue and choose its output filename.
+You can continue editing other projects; queued exports keep a snapshot of title, logo and media.
+Pause stops after the current video. Cancel acts on a specific queue item.
+Auto mode probes NVIDIA NVENC on the current PC and falls back to CPU if unavailable.
+Choose CPU mode for compatibility. Frame concurrency is limited by available CPU/RAM.
+GPU frame concurrency supports up to 8, adjusted for CPU/RAM and video resolution.
+Blurred backgrounds are precomputed once in each project's render-cache and reused.
+GPU raster/compositing uses ANGLE and encoding uses NVENC; CPU work is still needed.
+Projects and queue: %APPDATA%/AutoProShowStudio.
+Close confirmation protects pending jobs; queued items reopen paused and can be resumed.
+
+This unsigned build was tested on the development Windows PC with actual NVIDIA NVENC and CPU exports.
+A clean-machine physically-offline test and long-video stress benchmarks remain outstanding.

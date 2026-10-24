@@ -14,5 +14,5 @@
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true
   },
-  "exclude": ["remotion.config.ts", "out", ".vite"]
+  "exclude": ["remotion.config.ts", "out", "release", ".vite"]
 }

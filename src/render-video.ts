@@ -1,230 +1,189 @@
 import {
   type CancelSignal,
-  type DownloadBrowserProgressFn,
-  type RenderMediaProgress,
   ensureBrowser,
+  makeCancelSignal,
+  openBrowser,
   renderMedia,
   selectComposition,
 } from "@remotion/renderer";
-import {rm} from "node:fs/promises";
 import path from "node:path";
-import {
-  RENDER_CANCELLED_MESSAGE,
-  type RenderResult,
-  type RenderUpdate,
-} from "./electron-api";
-import {getCompositorPackage} from "./compositor-package";
+import { rm } from "node:fs/promises";
+import { type RenderResult, type RenderUpdate } from "./electron-api";
+import { getCompositorPackage } from "./compositor-package";
 import {
   bundleRemotionProject,
   getPrebuiltRemotionBundlePath,
   hasPrebuiltRemotionBundle,
 } from "./remotion-bundle";
-import {getPackagedBrowserPaths} from "./packaged-browser";
-import type {HelloWorldProps} from "../remotion/types";
-
-const compositionId = "HelloWorld";
-
-function isRenderCancelledError(error: unknown): boolean {
-  return error instanceof Error && error.message === RENDER_CANCELLED_MESSAGE;
-}
-
-function getBinariesDirectory({
+import { getPackagedBrowserPaths } from "./packaged-browser";
+import { renderPolicy } from "./main/render-policy";
+import type { SceneProps } from "./shared/project";
+export type RenderDetails = {
+  encoder: string;
+  concurrency: number;
+  fallback: boolean;
+  elapsedMs?: number;
+};
+let devBundle: Promise<string> | null = null;
+export async function renderVideo({
   isPackaged,
   projectRoot,
-}: {
-  isPackaged: boolean;
-  projectRoot: string;
-}): string | null {
-  if (!isPackaged) {
-    return null;
-  }
-
-  const compositorPackage = getCompositorPackage({
-    arch: process.arch,
-    platform: process.platform,
-  });
-
-  return path.join(
-    path.dirname(projectRoot),
-    "app.asar.unpacked",
-    "node_modules",
-    compositorPackage,
-  );
-}
-
-async function getServeUrl({
-  isPackaged,
-  projectRoot,
-  onUpdate,
-}: {
-  isPackaged: boolean;
-  projectRoot: string;
-  onUpdate?: (update: RenderUpdate) => void;
-}): Promise<string> {
-  if (isPackaged) {
-    if (!hasPrebuiltRemotionBundle(projectRoot)) {
-      throw new Error(
-        "The packaged app is missing its prebuilt Remotion bundle. Rebuild the Electron app.",
-      );
-    }
-
-    onUpdate?.({
-      type: "status",
-      message: "Using the prebuilt Remotion bundle from the packaged app...",
-    });
-
-    return getPrebuiltRemotionBundlePath(projectRoot);
-  }
-
-  onUpdate?.({
-    type: "status",
-    message: "Bundling the Remotion project for development...",
-  });
-
-  return bundleRemotionProject({
-    projectRoot,
-    onUpdate,
-  });
-}
-
-export const renderVideo = async ({
-  isPackaged,
   outputPath,
-  projectRoot,
-  titleText,
+  inputProps,
   onUpdate,
   cancelSignal,
+  onDetails,
 }: {
   isPackaged: boolean;
-  outputPath: string;
   projectRoot: string;
-  titleText: string;
-  onUpdate?: (update: RenderUpdate) => void;
+  outputPath: string;
+  inputProps: SceneProps;
+  onUpdate?: (u: RenderUpdate) => void;
   cancelSignal?: CancelSignal;
-}): Promise<RenderResult> => {
+  onDetails?: (d: RenderDetails) => void;
+}): Promise<RenderResult> {
+  const started = Date.now(),
+    localSignal = makeCancelSignal();
   let wasCancelled = false;
+  cancelSignal?.(() => {
+    wasCancelled = true;
+    localSignal.cancel();
+  });
+  const cleanup = async () => {
+    await rm(outputPath, { force: true });
+    return { cancelled: true as const, outputPath: null };
+  };
   const browserExecutable = isPackaged
-    ? getPackagedBrowserPaths({
+    ? (getPackagedBrowserPaths({
         arch: process.arch,
         platform: process.platform,
         projectRoot,
-      })?.packagedBrowserExecutablePath ?? null
+      })?.packagedBrowserExecutablePath ?? null)
     : null;
-
-  async function finishCancelledRender(): Promise<RenderResult> {
-    await rm(outputPath, {force: true});
-    return {
-      cancelled: true as const,
-      outputPath: null,
-    };
-  }
-
-  cancelSignal?.(() => {
-    wasCancelled = true;
+  const compositor = getCompositorPackage({
+    arch: process.arch,
+    platform: process.platform,
   });
-
-  const inputProps: HelloWorldProps = {
-    titleText: titleText.trim() || "Hello from Electron",
-  };
-
+  const binaryDir = isPackaged
+    ? path.join(
+        path.dirname(projectRoot),
+        "app.asar.unpacked/node_modules",
+        compositor,
+      )
+    : path.join(projectRoot, "node_modules", compositor);
+  const binariesDirectory = isPackaged ? binaryDir : null;
   try {
-    onUpdate?.({
-      type: "status",
-      message: "Checking browser installation...",
-    });
-
-    await ensureBrowser({
-      browserExecutable,
-      onBrowserDownload: ({chromeMode}) => {
-        const browserName =
-          chromeMode === "chrome-for-testing" ? "Chrome" : "Chrome Headless Shell";
-        const onProgress: DownloadBrowserProgressFn = (progress) => {
-          onUpdate?.({
-            type: "progress",
-            stage: "browser-download",
-            progress: progress.percent,
-          });
-        };
-
+    onUpdate?.({ type: "status", message: "Chuẩn bị trình dựng video…" });
+    await ensureBrowser({ browserExecutable });
+    if (wasCancelled) return cleanup();
+    let serveUrl: string;
+    if (isPackaged) {
+      if (!hasPrebuiltRemotionBundle(projectRoot))
+        throw Error("Thiếu composition bundle. Hãy đóng gói lại ứng dụng.");
+      serveUrl = getPrebuiltRemotionBundlePath(projectRoot);
+    } else {
+      devBundle ??= bundleRemotionProject({ projectRoot, onUpdate }).catch(
+        (error) => {
+          devBundle = null;
+          throw error;
+        },
+      );
+      serveUrl = await devBundle;
+    }
+    if (wasCancelled) return cleanup();
+    const policy = await renderPolicy(
+      binaryDir,
+      inputProps.project.exportSettings?.mode ?? "auto",
+      inputProps.project.exportSettings?.parallelFrames ?? 0,
+      inputProps.project.video.width * inputProps.project.video.height,
+    );
+    let details: RenderDetails = {
+      encoder: policy.encoder,
+      concurrency: policy.concurrency,
+      fallback: false,
+    };
+    onDetails?.(details);
+    const run = async (gpu: boolean) => {
+      const concurrency = gpu ? policy.concurrency : policy.cpuConcurrency;
+      const chromiumOptions = gpu
+        ? { gl: "angle" as const }
+        : { gl: "swangle" as const };
+      const browser = await openBrowser("chrome", {
+        browserExecutable,
+        chromiumOptions,
+      });
+      try {
+        const composition = await selectComposition({
+          serveUrl,
+          id: "AutoSlideshow",
+          inputProps,
+          binariesDirectory,
+          browserExecutable,
+          chromiumOptions,
+          puppeteerInstance: browser,
+        });
+        if (wasCancelled) return;
         onUpdate?.({
           type: "status",
-          message: `Downloading ${browserName}...`,
+          message:
+            (gpu ? "GPU NVIDIA NVENC" : "CPU H.264") +
+            " · " +
+            concurrency +
+            " frames đồng thời",
         });
-
-        return {
-          version: null,
-          onProgress,
-        };
-      },
-    });
-
-    if (wasCancelled) {
-      return finishCancelledRender();
-    }
-
-    const serveUrl = await getServeUrl({
-      isPackaged,
-      projectRoot,
-      onUpdate,
-    });
-
-    if (wasCancelled) {
-      return finishCancelledRender();
-    }
-
-    const binariesDirectory = getBinariesDirectory({
-      isPackaged,
-      projectRoot,
-    });
-
-    const composition = await selectComposition({
-      serveUrl,
-      id: compositionId,
-      inputProps,
-      binariesDirectory,
-      browserExecutable,
-    });
-
-    if (wasCancelled) {
-      return finishCancelledRender();
-    }
-
-    onUpdate?.({
-      type: "status",
-      message: "Rendering video...",
-    });
-
-    await renderMedia({
-      composition,
-      serveUrl,
-      codec: "h264",
-      outputLocation: outputPath,
-      inputProps,
-      binariesDirectory,
-      browserExecutable,
-      cancelSignal,
-      onProgress(progress: RenderMediaProgress) {
-        onUpdate?.({
-          type: "progress",
-          stage: "rendering",
-          progress: progress.progress * 100,
+        await renderMedia({
+          composition,
+          serveUrl,
+          codec: "h264",
+          audioCodec: "aac",
+          pixelFormat: "yuv420p",
+          hardwareAcceleration: gpu ? "required" : "disable",
+          videoBitrate:
+            composition.width * composition.height > 1280 * 720 ? "8M" : "5M",
+          concurrency,
+          outputLocation: outputPath,
+          inputProps,
+          binariesDirectory,
+          browserExecutable,
+          chromiumOptions,
+          puppeteerInstance: browser,
+          cancelSignal: localSignal.cancelSignal,
+          onProgress: (p) =>
+            onUpdate?.({
+              type: "progress",
+              stage: "rendering",
+              progress: p.progress * 100,
+            }),
         });
-      },
-    });
-
-    if (wasCancelled) {
-      return finishCancelledRender();
+      } finally {
+        await browser.close({ silent: true });
+      }
+    };
+    try {
+      await run(policy.gpu);
+    } catch (error) {
+      if (wasCancelled) return cleanup();
+      if (!policy.gpu) throw error;
+      // Hardware/driver/browser differences must not prevent exporting on another PC.
+      await rm(outputPath, { force: true });
+      details = {
+        encoder: "CPU H.264",
+        concurrency: policy.cpuConcurrency,
+        fallback: true,
+      };
+      onDetails?.(details);
+      onUpdate?.({
+        type: "status",
+        message: "GPU không hoàn tất được. Tự chuyển CPU…",
+      });
+      await run(false);
     }
-
-    return {
-      cancelled: false,
-      outputPath,
-    }
+    if (wasCancelled) return cleanup();
+    onDetails?.({ ...details, elapsedMs: Date.now() - started });
+    return { cancelled: false, outputPath };
   } catch (error) {
-    if (wasCancelled || isRenderCancelledError(error)) {
-      return finishCancelledRender();
-    }
-
+    await rm(outputPath, { force: true });
+    if (wasCancelled) return cleanup();
     throw error;
   }
-};
+}

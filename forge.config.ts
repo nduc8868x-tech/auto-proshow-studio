@@ -1,18 +1,21 @@
-import {existsSync} from "node:fs";
-import {cp, mkdir} from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { cp, mkdir } from "node:fs/promises";
 import path from "node:path";
-import {ensureBrowser} from "@remotion/renderer";
-import {VitePlugin} from "@electron-forge/plugin-vite";
-import {getCompositorPackage} from "./src/compositor-package";
-import {getPackagedBrowserPaths} from "./src/packaged-browser";
-import {bundleRemotionProject, getPrebuiltRemotionBundlePath} from "./src/remotion-bundle";
+import { ensureBrowser } from "@remotion/renderer";
+import { VitePlugin } from "@electron-forge/plugin-vite";
+import { getCompositorPackage } from "./src/compositor-package";
+import { getPackagedBrowserPaths } from "./src/packaged-browser";
+import {
+  bundleRemotionProject,
+  getPrebuiltRemotionBundlePath,
+} from "./src/remotion-bundle";
 
 const DARWIN_COMPOSITOR_PACKAGES = [
   "@remotion/compositor-darwin-x64",
   "@remotion/compositor-darwin-arm64",
 ];
 const PACKAGE_BROWSER_ENV_VAR = "REMOTION_ELECTRON_PACKAGE_BROWSER";
-const shouldPackageBrowser = process.env[PACKAGE_BROWSER_ENV_VAR] === "true";
+const shouldPackageBrowser = process.env[PACKAGE_BROWSER_ENV_VAR] !== "false";
 
 const DARWIN_UNIVERSAL_ARCH_FILES =
   "Contents/Resources/app.asar.unpacked/node_modules/@remotion/compositor-darwin-*/**";
@@ -28,12 +31,14 @@ function getCompositorPackagesForPackaging({
     return DARWIN_COMPOSITOR_PACKAGES;
   }
 
-  return [getCompositorPackage({arch, platform})];
+  return [getCompositorPackage({ arch, platform })];
 }
 
 function isMissingPackageError(error: unknown): error is NodeJS.ErrnoException {
   return (
-    error instanceof Error && "code" in error && error.code === "MODULE_NOT_FOUND"
+    error instanceof Error &&
+    "code" in error &&
+    error.code === "MODULE_NOT_FOUND"
   );
 }
 
@@ -50,7 +55,7 @@ function shouldAllowMissingCompositorPackage({
     return false;
   }
 
-  return compositorPackage !== getCompositorPackage({arch, platform});
+  return compositorPackage !== getCompositorPackage({ arch, platform });
 }
 
 function resolveInstalledCompositorPackageDirectory({
@@ -61,9 +66,12 @@ function resolveInstalledCompositorPackageDirectory({
   compositorPackage: string;
 }): string | null {
   try {
-    const compositorPackageJson = require.resolve(`${compositorPackage}/package.json`, {
-      paths: [process.cwd()],
-    });
+    const compositorPackageJson = require.resolve(
+      `${compositorPackage}/package.json`,
+      {
+        paths: [process.cwd()],
+      },
+    );
 
     return path.dirname(compositorPackageJson);
   } catch (error: unknown) {
@@ -109,8 +117,8 @@ async function stageCompositorPackages({
       compositorPackage,
     );
 
-    await mkdir(path.dirname(compositorDestination), {recursive: true});
-    await cp(compositorSource, compositorDestination, {recursive: true});
+    await mkdir(path.dirname(compositorDestination), { recursive: true });
+    await cp(compositorSource, compositorDestination, { recursive: true });
   }
 }
 
@@ -150,7 +158,7 @@ export async function stageBrowser({
   await cp(
     browserPaths.downloadedBrowserFolder,
     browserPaths.packagedBrowserCopyDestination,
-    {recursive: true},
+    { recursive: true },
   );
 }
 
@@ -176,6 +184,11 @@ const config = {
       platform: string,
       arch: string,
     ) => {
+      await cp(
+        path.join(process.cwd(), "templates"),
+        path.join(buildPath, "templates"),
+        { recursive: true },
+      );
       await bundleRemotionProject({
         projectRoot: process.cwd(),
         outDir: getPrebuiltRemotionBundlePath(buildPath),

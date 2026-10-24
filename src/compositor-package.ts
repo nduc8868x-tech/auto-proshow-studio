@@ -7,7 +7,8 @@ const getLinuxLibc = (): LinuxLibc => {
     return "gnu";
   }
 
-  const header = (report as {header?: {glibcVersionRuntime?: string}}).header;
+  const header = (report as { header?: { glibcVersionRuntime?: string } })
+    .header;
   return header?.glibcVersionRuntime ? "gnu" : "musl";
 };
 

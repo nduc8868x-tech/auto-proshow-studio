@@ -1,0 +1,27 @@
+{
+  "label": "optimized",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "durationSeconds": 24,
+  "imageCount": 9,
+  "blurPx": 32,
+  "motionSpeed": 3,
+  "logicalCpus": 12,
+  "totalMemoryGiB": 15.844112396240234,
+  "runs": [
+    {
+      "encoder": "NVIDIA NVENC",
+      "concurrency": 8,
+      "fallback": false,
+      "elapsedMs": 17432
+    },
+    {
+      "encoder": "NVIDIA NVENC",
+      "concurrency": 8,
+      "fallback": false,
+      "elapsedMs": 16050
+    }
+  ],
+  "meanElapsedMs": 16741
+}

@@ -5,3 +5,7 @@ dist
 .env
 *.tsbuildinfo
 out
+
+fixtures/generated/
+
+release/

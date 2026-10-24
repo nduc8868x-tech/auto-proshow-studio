@@ -1,4 +1,4 @@
-import {existsSync} from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 export const PACKAGED_BROWSER_DIR = "remotion-browser";
@@ -79,7 +79,7 @@ export function getPackagedBrowserPaths({
   platform: string;
   projectRoot: string;
 }): PackagedBrowserPaths | null {
-  const browserLayout = getBrowserLayout({arch, platform});
+  const browserLayout = getBrowserLayout({ arch, platform });
 
   if (!browserLayout) {
     return null;
@@ -92,7 +92,7 @@ export function getPackagedBrowserPaths({
     "chrome-headless-shell",
     browserLayout.platformDir,
   );
-  
+
   const packagedBrowserCopyDestination = buildPath
     ? path.join(buildPath, PACKAGED_BROWSER_DIR, browserLayout.platformDir)
     : null;
