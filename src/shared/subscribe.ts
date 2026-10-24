@@ -62,6 +62,26 @@ export function subscribeGeometry(
 export function subscribeFramePath(assetId: string, index: number) {
   return `media/templates/${assetId}/${String(index).padStart(4, "0")}.png`;
 }
+export function transformSubscribeClip(
+  clip: SubscribeClip,
+  asset: Pick<SubscribeAsset, "width" | "height">,
+  videoWidth: number,
+  videoHeight: number,
+  dx: number,
+  dy: number,
+  resize = false,
+): SubscribeClip {
+  const next = resize
+    ? { ...clip, width: Math.max(5, Math.min(100, clip.width + dx)) }
+    : { ...clip, x: clip.x + dx, y: clip.y + dy };
+  const geometry = subscribeGeometry(next, asset, videoWidth, videoHeight);
+  return {
+    ...next,
+    x: geometry.x,
+    y: geometry.y,
+    width: Math.max(5, geometry.width),
+  };
+}
 export function fitSubscribeClip(
   clip: SubscribeClip,
   totalFrames: number,

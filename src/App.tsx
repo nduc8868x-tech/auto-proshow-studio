@@ -12,7 +12,8 @@ import {
   type Project,
   type SceneProps,
 } from "./shared/project";
-import type { QueueState } from "./app-api";
+import type { AppAPI, QueueState } from "./app-api";
+import type { SubscribeClip } from "./shared/subscribe";
 import { motionSettings } from "./shared/motion-settings";
 import { reorderImages } from "./shared/reorder-images";
 const api = window.appAPI;
@@ -25,6 +26,12 @@ export function App() {
     [selected, setSelected] = useState<string | null>(null),
     [frame, setFrame] = useState(0),
     [managerOpen, setManagerOpen] = useState(false);
+  const [savedLogos, setSavedLogos] = useState<
+    Awaited<ReturnType<AppAPI["listLogos"]>>
+  >([]);
+  const [selectedSubscribe, setSelectedSubscribe] = useState<string | null>(
+    null,
+  );
   const [timelineDrop, setTimelineDrop] = useState<{
     id: string;
     edge: "before" | "after";
@@ -49,6 +56,7 @@ export function App() {
       const list = await api.list();
       setProjects(list);
       setData(list.length ? await api.open(list[0].id) : await api.create());
+      setSavedLogos(await api.listLogos());
     });
     void api.getQueue().then(setQueue);
     return api.onQueue(setQueue);
@@ -67,6 +75,32 @@ export function App() {
   const edit = (update: Partial<Project>) => {
     if (p) setData({ ...data!, project: { ...p, ...update } });
   };
+  useEffect(() => {
+    setSelectedSubscribe(null);
+  }, [p?.id]);
+  function updateSubscribe(clip: SubscribeClip, commit: boolean) {
+    if (!p) return;
+    const next = {
+      ...p,
+      subscribeClips: p.subscribeClips.map((c) =>
+        c.id === clip.id ? clip : c,
+      ),
+    };
+    if (commit) void run(() => save(next));
+    else edit({ subscribeClips: next.subscribeClips });
+  }
+  function removeImage(id: string) {
+    if (!p || busy) return;
+    player.current?.pause();
+    const index = p.images.findIndex((i) => i.id === id);
+    const images = p.images.filter((i) => i.id !== id);
+    void run(async () => {
+      await save({ ...p, images });
+      if (!images.length) setFrame(0);
+      if (selected === id)
+        setSelected(images[Math.min(index, images.length - 1)]?.id ?? null);
+    });
+  }
   const clip = p?.clips.find((c) => c.imageId === selected);
   const exportVideo = useCallback(
     () =>
@@ -110,6 +144,7 @@ export function App() {
   const openProject = async (id: string) => {
     if (p && p.id !== id) await save(p);
     setData(await api.open(id));
+    setSavedLogos(await api.listLogos());
     setSelected(null);
     setFrame(0);
     await refresh();
@@ -315,6 +350,21 @@ export function App() {
                 />
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <small title={image.originalName}>{image.originalName}</small>
+                <button
+                  type="button"
+                  className="delete-image"
+                  aria-label={"Xóa ảnh " + image.originalName}
+                  title="Xóa ảnh khỏi dự án"
+                  disabled={busy}
+                  draggable={false}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(image.id);
+                  }}
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>
@@ -336,6 +386,10 @@ export function App() {
           data={data}
           playerRef={player}
           frame={frame}
+          busy={busy}
+          selectedSubscribeId={selectedSubscribe}
+          onSelectSubscribe={setSelectedSubscribe}
+          onSubscribeChange={updateSubscribe}
           onLayout={(layout) =>
             p && edit({ overlay: { ...p.overlay, layout } })
           }
@@ -525,11 +579,41 @@ export function App() {
                   void run(async () => {
                     await save(p);
                     setData(await api.importMedia(p.id, "logo"));
+                    setSavedLogos(await api.listLogos());
                   })
                 }
               >
-                {p.overlay.logo ? "Thay logo" : "Chọn logo"}
+                ＋ Thêm logo
               </button>
+              <div className="saved-logos" aria-label="Thư viện logo đã lưu">
+                <h4>Logo đã lưu ({savedLogos.length})</h4>
+                {savedLogos.length ? (
+                  <div className="saved-logo-grid">
+                    {savedLogos.map((logo) => (
+                      <button
+                        type="button"
+                        key={logo.id}
+                        disabled={busy}
+                        aria-label={"Dùng logo " + logo.name}
+                        title={logo.name}
+                        onClick={() =>
+                          void run(async () => {
+                            await save(p);
+                            setData(await api.useLogo(p.id, logo.id));
+                          })
+                        }
+                      >
+                        <img src={logo.thumbnailUrl} alt="" />
+                        <span>{logo.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <small className="hint">
+                    Logo thêm vào được lưu để dùng lại cho các dự án khác.
+                  </small>
+                )}
+              </div>
               {p.overlay.logo && (
                 <button
                   disabled={busy}
@@ -708,14 +792,8 @@ export function App() {
                 </select>
               </label>
               <button
-                onClick={() =>
-                  void run(() =>
-                    save({
-                      ...p,
-                      images: p.images.filter((i) => i.id !== selected),
-                    }),
-                  )
-                }
+                disabled={busy}
+                onClick={() => selected && removeImage(selected)}
               >
                 Xóa ảnh khỏi dự án
               </button>
@@ -838,6 +916,8 @@ export function App() {
             project={p}
             frame={frame}
             busy={busy}
+            selectedId={selectedSubscribe}
+            onSelect={setSelectedSubscribe}
             onInsert={async (clip) => {
               let saved = false;
               await run(async () => {
@@ -853,13 +933,15 @@ export function App() {
               void run(async () => {
                 player.current?.pause();
                 await save(p);
-                setData(
-                  await api.addSubscribe(
-                    p.id,
-                    source,
-                    Math.max(0, frame),
-                    removeGreen,
-                  ),
+                const added = await api.addSubscribe(
+                  p.id,
+                  source,
+                  Math.max(0, frame),
+                  removeGreen,
+                );
+                setData(added);
+                setSelectedSubscribe(
+                  added.project.subscribeClips.at(-1)?.id ?? null,
                 );
                 await refresh();
               })
@@ -868,16 +950,7 @@ export function App() {
               player.current?.pause();
               player.current?.seekTo(at);
             }}
-            onChange={(clip, commit) => {
-              const next = {
-                ...p,
-                subscribeClips: p.subscribeClips.map((c) =>
-                  c.id === clip.id ? clip : c,
-                ),
-              };
-              if (commit) void run(() => save(next));
-              else edit({ subscribeClips: next.subscribeClips });
-            }}
+            onChange={updateSubscribe}
             onDelete={(id) =>
               void run(() =>
                 save({

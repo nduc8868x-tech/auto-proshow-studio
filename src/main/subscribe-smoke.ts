@@ -193,6 +193,81 @@ export async function testSubscribeUI(
   await pause();
   await idle();
   assert.equal(service.get(id).subscribeClips[0].loop, true);
+  await win.webContents.executeJavaScript(
+    "Array.from(document.querySelectorAll('.preview button')).find(b=>b.textContent.trim()==='Chỉnh vị trí sub').click();document.querySelector('.player-stage').scrollIntoView({block:'center'})",
+  );
+  await pause();
+  win.webContents.debugger.attach("1.3");
+  try {
+    async function previewDrag(selector: string, dx: number, dy: number) {
+      const point = await win.webContents.executeJavaScript(
+        "(()=>{const r=document.querySelector(" +
+          JSON.stringify(selector) +
+          ").getBoundingClientRect();const s=document.querySelector('.player-stage').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2,w:s.width,h:s.height}})()",
+      );
+      for (const [type, offset, buttons] of [
+        ["mouseMoved", 0, 0],
+        ["mousePressed", 0, 1],
+        ["mouseMoved", 1, 1],
+        ["mouseReleased", 1, 0],
+      ] as const) {
+        await win.webContents.debugger.sendCommand("Input.dispatchMouseEvent", {
+          type,
+          x: point.x + offset * dx * point.w,
+          y: point.y + offset * dy * point.h,
+          button: "left",
+          buttons,
+          clickCount: 1,
+        });
+      }
+      await pause();
+      await idle();
+    }
+    const before = { ...service.get(id).subscribeClips[0] };
+    await previewDrag(".subscribe-selection", 0.06, -0.08);
+    const moved = service.get(id).subscribeClips[0];
+    assert.ok(
+      moved.x > before.x + 5 && moved.y < before.y - 7,
+      "Preview drag must autosave position using stage coordinates",
+    );
+    await previewDrag(".subscribe-selection .resize-handle", 0.05, 0.02);
+    const resized = service.get(id).subscribeClips[0];
+    assert.ok(
+      resized.width > before.width + 4,
+      "Preview corner must resize Subscribe",
+    );
+    assert.equal(resized.startFrame, before.startFrame);
+    assert.equal(resized.durationFrames, before.durationFrames);
+    assert.equal(
+      await win.webContents.executeJavaScript(
+        "Number(document.querySelector('[aria-label=\"Subscribe Ngang (%)\"]').value)",
+      ),
+      Number(resized.x.toFixed(2)),
+      "Timeline inspector must reflect preview drag",
+    );
+    await win.webContents.executeJavaScript(
+      "new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))",
+    );
+    await writeFile(
+      path.join(
+        root,
+        app.isPackaged
+          ? "packaged-subscribe-preview.png"
+          : "dev-subscribe-preview.png",
+      ),
+      (
+        await win.webContents.capturePage(undefined, {
+          stayHidden: true,
+          stayAwake: true,
+        })
+      ).toPNG(),
+    );
+  } finally {
+    win.webContents.debugger.detach();
+  }
+  await win.webContents.executeJavaScript(
+    "Array.from(document.querySelectorAll('.preview button')).find(b=>b.textContent.trim()==='Xong chỉnh sub').click()",
+  );
   const original = { ...service.get(id).subscribeClips[0] };
   async function waitCount(count: number) {
     for (let i = 0; i < 150; i++) {

@@ -15,6 +15,7 @@ import { execFile } from "node:child_process";
 import { promisify, isDeepStrictEqual } from "node:util";
 import { isImageFilename, imageMime } from "../shared/media-formats";
 import { ImageDecoder } from "./image-decoder";
+import { LogoLibrary } from "./logo-library";
 import { z } from "zod";
 import { verifiedProjectFolder } from "./project-storage";
 import type { ProjectSummary } from "../app-api";
@@ -37,6 +38,7 @@ import {
 const exec = promisify(execFile);
 export class ProjectService {
   private opened = new Map<string, Project>();
+  private logos: LogoLibrary;
   constructor(
     private root: string,
     private server: MediaServer,
@@ -45,7 +47,66 @@ export class ProjectService {
       trashDirectory: (folder: string) => Promise<void>;
       isBusy: (id: string) => boolean;
     },
-  ) {}
+  ) {
+    this.logos = new LogoLibrary(path.join(path.dirname(root), "logo-library"));
+  }
+  async listLogos() {
+    return Promise.all(
+      (await this.logos.list()).map(async (logo) => ({
+        ...logo,
+        thumbnailUrl: this.server.register(
+          "saved-logo-" + logo.id,
+          this.logos.file(logo.id, true),
+        ),
+      })),
+    );
+  }
+  private async rememberLogo(p: Project) {
+    const logo = p.overlay.logo;
+    if (logo)
+      await this.logos.add(
+        logo.originalName,
+        logo.width,
+        logo.height,
+        await readFile(await this.assetPath(p, logo.relativePath)),
+        await readFile(await this.assetPath(p, logo.thumbnailPath)),
+      );
+  }
+  async useLogo(id: string, logoId: string) {
+    const p = structuredClone(this.get(id));
+    const logo = await this.logos.get(logoId),
+      aid = randomUUID();
+    const relativePath = "media/images/" + aid + ".png",
+      thumbnailPath = "thumbnails/" + aid + ".png";
+    for (const rel of [relativePath, thumbnailPath])
+      await mkdir(path.dirname(path.join(this.folder(id), rel)), {
+        recursive: true,
+      });
+    await copyFile(
+      this.logos.file(logoId),
+      path.join(this.folder(id), relativePath),
+    );
+    await copyFile(
+      this.logos.file(logoId, true),
+      path.join(this.folder(id), thumbnailPath),
+    );
+    p.overlay = {
+      ...p.overlay,
+      enabled: true,
+      logo: {
+        id: aid,
+        originalName: logo.name,
+        width: logo.width,
+        height: logo.height,
+        relativePath,
+        thumbnailPath,
+      },
+    };
+    p.updatedAt = new Date().toISOString();
+    await this.persist(p);
+    this.opened.set(id, p);
+    return this.view(p);
+  }
   folder(id: string) {
     z.string().uuid().parse(id);
     return path.join(this.root, id);
@@ -336,6 +397,7 @@ export class ProjectService {
     );
     if (p.id !== id) throw Error("ID dự án không khớp");
     validateTimeline(p);
+    await this.rememberLogo(p);
     this.opened.set(p.id, p);
     return this.view(p);
   }
@@ -484,9 +546,16 @@ export class ProjectService {
               thumbnailPath,
               ...size,
             };
-            if (kind === "logo")
+            if (kind === "logo") {
+              await this.logos.add(
+                name,
+                size.width,
+                size.height,
+                image.toPNG(),
+                image.resize({ width: 240 }).toPNG(),
+              );
               p.overlay = { ...p.overlay, enabled: true, logo: imported };
-            else p.images.push(imported);
+            } else p.images.push(imported);
           } else {
             const valid =
               ext === ".wav"

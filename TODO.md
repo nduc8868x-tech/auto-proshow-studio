@@ -26,3 +26,6 @@
 - Follow-up: automatic render-cache disk quota/eviction for many blur/resolution variants. Cache is regenerable and removed when its project is trashed.
 - Subscribe GIF template track: built-in user-supplied animation, optional GIF import, green key/transparent union crop, per-frame timing, pointer move/resize, geometry/time/loop controls, save/reopen/queue integration and interval-limited rendering.
 - Subscribe clips share one row; copy/paste buttons and Ctrl+C/V insert independent clips at the playhead with the original geometry/loop settings, reusing the asset. A selector supports overlapping intervals.
+- Saved logo library shared across projects, content deduplication, multi-file logo import, reuse with project-owned copies and migration of current logos from older projects when opened.
+- Subscribe preview pointer drag/resize with autosave, shared track/preview selection, aspect-preserving bounds and keyboard positioning.
+- Direct thumbnail deletion works before voice import, redistributes remaining timeline images and retains source/project media needed by queued snapshots.

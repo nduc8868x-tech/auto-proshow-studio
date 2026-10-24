@@ -11,6 +11,7 @@ import { overlayGeometry } from "../shared/overlay-layout";
 import { renderVideo } from "../render-video";
 import { ProjectService } from "./project-service";
 import { testSubscribeUI, verifySubscribeOutput } from "./subscribe-smoke";
+import { testMediaLibraryUI } from "./media-library-smoke";
 export async function runAppSmoke(
   win: BrowserWindow,
   service: ProjectService,
@@ -202,6 +203,7 @@ export async function runAppSmoke(
     assert.equal((await stat(path.join(root, "1.png"))).size, sourceBefore);
     assert.ok((await stat(sentinel)).size > 0);
     await assert.rejects(service.trashProject("../outside"));
+    await testMediaLibraryUI(win, service, root);
     await service.renameProject(id, "Kiểm thử tiếng Việt");
     await queue.pause(true);
     const protectedJob = await queue.enqueue(
@@ -678,6 +680,9 @@ export async function runAppSmoke(
           projectId: id,
           outputPath,
           checks: [
+            "Saved logo library: deduplication, cross-project UI reuse, project-owned copy and save/reopen",
+            "Thumbnail image deletion before voice, timeline redistribution, last-image empty state, unchanged voice and retained source/snapshot media",
+            "Subscribe native preview drag/resize autosave, shared timeline selection and geometry in exported frames",
             "Subscribe single row, button and native Ctrl+C/V paste at playhead, independent IDs, preserved geometry/loop, end trim, overlapping selector, text-input shortcuts and save/reopen",
             "Subscribe builtin GIF: all 61 frames, 2.03s, transparent green key and union crop",
             "Subscribe native pointer timeline move/resize, property edit, delete/reinsert and frame reuse",

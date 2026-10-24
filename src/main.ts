@@ -161,6 +161,10 @@ app
     });
     handle("open", (id: string) => service.open(id));
     handle("save", (p) => service.save(p));
+    handle("list-logos", () => service.listLogos());
+    handle("use-logo", (id: string, logoId: string) =>
+      service.useLogo(id, logoId),
+    );
     handle(
       "add-subscribe",
       async (
@@ -190,7 +194,7 @@ app
         throw Error("Loại media không hợp lệ");
       const result = await dialog.showOpenDialog(win!, {
         properties:
-          kind === "images" ? ["openFile", "multiSelections"] : ["openFile"],
+          kind !== "voice" ? ["openFile", "multiSelections"] : ["openFile"],
         filters: [
           {
             name:

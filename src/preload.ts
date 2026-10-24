@@ -25,6 +25,9 @@ window.addEventListener("drop", (e) => {
     );
 });
 const api: AppAPI = {
+  listLogos: () => ipcRenderer.invoke("app:list-logos"),
+  useLogo: (projectId, logoId) =>
+    ipcRenderer.invoke("app:use-logo", projectId, logoId),
   setDropProject: (id) => {
     dropProject = id;
   },

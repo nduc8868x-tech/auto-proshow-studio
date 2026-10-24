@@ -9,11 +9,55 @@ import { keyGreenPixels } from "../src/shared/green-screen";
 import {
   fitSubscribeClip,
   pasteSubscribeClip,
+  transformSubscribeClip,
   subscribeFrameIndex,
   subscribeGeometry,
   type SubscribeClip,
 } from "../src/shared/subscribe";
 import { randomUUID } from "node:crypto";
+test("preview Subscribe dragging and resizing preserve timing and stay within landscape/portrait frames", () => {
+  const clip: SubscribeClip = {
+    id: randomUUID(),
+    assetId: randomUUID(),
+    startFrame: 60,
+    durationFrames: 90,
+    x: 30,
+    y: 40,
+    width: 30,
+    loop: true,
+  };
+  for (const [w, h] of [
+    [1920, 1080],
+    [1080, 1920],
+  ]) {
+    for (const resize of [false, true]) {
+      for (const delta of [-200, 8, 200]) {
+        const moved = transformSubscribeClip(
+          clip,
+          { width: 640, height: 180 },
+          w,
+          h,
+          delta,
+          delta,
+          resize,
+        );
+        const box = subscribeGeometry(moved, { width: 640, height: 180 }, w, h);
+        assert.ok(
+          box.x >= 0 &&
+            box.y >= 0 &&
+            box.x + box.width <= 100.001 &&
+            box.y + box.height <= 100.001,
+        );
+        assert.equal(moved.startFrame, 60);
+        assert.equal(moved.durationFrames, 90);
+        assert.equal(moved.loop, true);
+        assert.equal(moved.id, clip.id);
+        assert.ok(moved.width >= 5);
+      }
+    }
+  }
+  assert.equal(clip.width, 30);
+});
 test("Subscribe paste creates an independent clip at the playhead and trims to video end", () => {
   const source: SubscribeClip = {
     id: randomUUID(),

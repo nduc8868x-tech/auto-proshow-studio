@@ -14,6 +14,8 @@ Bản dán giữ mẫu GIF, vị trí, kích thước, thời lượng và chế
 
 Template là một lớp chồng lên slideshow và tiêu đề, giữ nguyên thời lượng ảnh/voice/video. Mẫu mặc định nằm phía dưới giữa, phía trên dải tiêu đề mặc định; có thể chỉnh lại vị trí. Các bản chụp trong hàng đợi giữ lịch/thiết lập riêng lúc thêm vào.
 
+Trên preview, bấm **Chỉnh vị trí sub**, hoặc chọn sub trong danh sách cạnh nút. Preview tự tua đến đoạn đó. Kéo khung xanh để di chuyển, kéo góc dưới bên phải để đổi kích thước đúng tỉ lệ. Vị trí được giữ trong khung hình; thả chuột sẽ tự lưu. Phím mũi tên căn từng bước, Shift + mũi tên căn nhanh. Bấm **Xong chỉnh sub** để đóng khung. Sub được chọn dùng chung với track và các ô X/Y/kích thước; khung điều chỉnh chỉ hiện trong editor, không có trong video xuất.
+
 ## Cách xử lý
 
 GIF mẫu: 1280×720, 61 frame, 2,03 giây. Chromium WebCodecs giải mã đủ frame theo thời lượng gốc, tách màu xanh có làm mềm alpha và giảm viền xanh; cắt theo hợp vùng nội dung của toàn animation để hình không nhảy vị trí. Lưu PNG trong suốt dưới `media/templates/<uuid>/`. Remotion chọn frame theo thời gian video, không dựa vào đồng hồ GIF của trình duyệt; tua, pause, dựng song song và xuất đều dùng cùng cách chọn frame.
@@ -26,6 +28,6 @@ Tham khảo API: [ImageDecoder](https://developer.mozilla.org/en-US/docs/Web/API
 
 ## Kiểm tra
 
-32 tests và lint/typecheck đạt. Dev smoke và EXE portable mới đều đạt với đúng GIF mẫu, đủ 61 frame/2030 ms, alpha trong suốt, animation khác nhau giữa các frame; kéo chuột đổi thời điểm/thời lượng, sửa X/Y/kích thước, lặp, xóa/thêm lại, tái sử dụng asset và lưu/mở lại. Kiểm tra nút và phím Ctrl+C/V thật: dán tại playhead, ID độc lập, giữ hình học/lặp, cắt thời lượng cuối video, cùng một hàng kể cả khi chồng nhau, chọn đoạn bằng danh sách và không chặn phím khi nhập liệu. MP4 được so pixel với frame PNG tại giây 3 và 4,2; không xuất hiện tại giây 1 và 6 trong lịch 2–5 giây.
+34 tests và lint/typecheck đạt. Dev smoke và EXE portable mới đều đạt với đúng GIF mẫu, đủ 61 frame/2030 ms, alpha trong suốt, animation khác nhau giữa các frame; kéo chuột đổi thời điểm/thời lượng, sửa X/Y/kích thước, lặp, xóa/thêm lại, tái sử dụng asset và lưu/mở lại. Kiểm tra nút và phím Ctrl+C/V thật: dán tại playhead, ID độc lập, giữ hình học/lặp, cắt thời lượng cuối video, cùng một hàng kể cả khi chồng nhau, chọn đoạn bằng danh sách và không chặn phím khi nhập liệu. MP4 được so pixel với frame PNG tại giây 3 và 4,2; không xuất hiện tại giây 1 và 6 trong lịch 2–5 giây.
 
-Bản portable mới: `release/2026-10-24-subscribe-copy/auto-proshow-studio-win32-x64/auto-proshow-studio.exe`. ZIP: `release/AutoProShowStudio-Windows-x64.zip`. Kết quả EXE ở `packaged-result.json`, đối chiếu timestamp; kiểm thử máy sạch và video dài vẫn chưa chạy.
+Bản portable mới: `release/2026-10-24-logo-preview/auto-proshow-studio-win32-x64/auto-proshow-studio.exe`. ZIP: `release/AutoProShowStudio-Windows-x64.zip`. Kết quả EXE ở `packaged-result.json`, đối chiếu timestamp; kiểm thử máy sạch và video dài vẫn chưa chạy.

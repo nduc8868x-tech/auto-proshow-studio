@@ -6,15 +6,22 @@ No separate Node.js, FFmpeg or Chrome installation is expected.
 Import AVIF/JPG/JPEG/PNG/WebP/GIF/BMP/ICO/SVG photos and one MP3/WAV voice.
 Each import reports successful and failed file counts. Unsupported HEIC/TIFF must be converted.
 Scroll the right sidebar to Title & Logo: enable the white strip, edit title, choose/replace logo.
+Add logos with '+ Them logo'; multiple files can be selected. Imported logos are saved for reuse.
+Click a thumbnail in 'Logo da luu' to reuse it in this or another project.
+Saved logos live in the user's AutoProShowStudio/logo-library folder. Projects keep their own active logo copy.
 Use Edit Position above the preview to drag the strip or resize its corner handle.
 The sidebar also has X/Y, width/height, font size and top/middle/bottom presets.
 Motion speed: global 0.00x-10.00x, default 3.00x for NEW projects; 0 stops motion.
 New projects default to blurred-photo background. Existing saved settings are preserved.
 Drag photos left/right on the timeline; the purple marker shows the insertion position.
+Click X on a photo thumbnail to remove it from the project, including before adding voice.
+Remaining photo times are redistributed to keep voice duration. Source and queued snapshot media are retained.
 Subscribe templates: below the timeline, position the playhead and click '+ Mau Subscribe'.
 The supplied animated GIF is built in; green background is removed automatically.
 Drag the Subscribe clip to move it in time; drag its right edge to resize its duration.
 Select a clip to edit start/duration, X/Y and size, loop or delete it.
+Above preview click 'Chinh vi tri sub', then drag the Subscribe box or its corner handle.
+Preview movement/resize autosaves on release; the selector chooses among multiple Subscribe clips.
 All Subscribe clips share one timeline row. Use the clip selector for overlapping clips.
 Select a clip, click Copy, position the playhead by clicking empty track space, then Paste at playhead.
 Ctrl+C / Ctrl+V work while focused in the Subscribe editor, except inside text/number inputs.

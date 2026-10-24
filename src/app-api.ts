@@ -32,6 +32,17 @@ export type ProjectSummary = {
   thumbnailUrl?: string;
 };
 export type AppAPI = {
+  listLogos: () => Promise<
+    {
+      id: string;
+      name: string;
+      width: number;
+      height: number;
+      createdAt: string;
+      thumbnailUrl: string;
+    }[]
+  >;
+  useLogo: (projectId: string, logoId: string) => Promise<SceneProps>;
   setDropProject: (id: string) => void;
   onDropped: (
     listener: (result: { data?: SceneProps; error?: string }) => void,

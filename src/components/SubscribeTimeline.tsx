@@ -15,6 +15,8 @@ export function SubscribeTimeline({
   onDelete,
   onSeek,
   onInsert,
+  selectedId,
+  onSelect,
 }: {
   project: Project;
   frame: number;
@@ -24,9 +26,12 @@ export function SubscribeTimeline({
   onDelete: (id: string) => void;
   onSeek: (frame: number) => void;
   onInsert: (clip: SubscribeClip) => Promise<boolean>;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
 }) {
-  const [selected, setSelected] = useState<string | null>(null),
-    [removeGreen, setRemoveGreen] = useState(true),
+  const selected = selectedId,
+    setSelected = onSelect;
+  const [removeGreen, setRemoveGreen] = useState(true),
     [copied, setCopied] = useState<SubscribeClip | null>(null),
     [message, setMessage] = useState("");
   const pasting = useRef(false);
