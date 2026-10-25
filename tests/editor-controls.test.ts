@@ -24,7 +24,7 @@ test("old stored overlay and visual migrate without changing timing", () => {
   delete raw.visual.motionSpeed;
   const p = projectSchema.parse(raw);
   assert.deepEqual(p.overlay.layout, defaultOverlayLayout);
-  assert.equal(p.visual.motionSpeed, 3);
+  assert.equal(p.visual.motionSpeed, 7);
   assert.throws(() =>
     projectSchema.parse({
       ...p,
@@ -109,10 +109,11 @@ test("motion speed scales travel and safe fit keeps every pixel within frame", (
           assert.ok(Math.abs(m.y) + (m.fh * m.scale) / 2 <= 540 + 0.0001);
         }
 });
-test("new defaults use blurred background and 3x while saved settings are preserved", () => {
+test("new defaults use blurred background and 7x while saved settings are preserved", () => {
   const initial = newProject(randomUUID());
   assert.equal(initial.visual.fitMode, "contain-blur");
-  assert.equal(initial.visual.motionSpeed, 3);
+  assert.equal(initial.visual.motionSpeed, 7);
+  assert.equal(initial.overlay.layout.fontSize, 180);
   const previous = projectSchema.parse({
     ...initial,
     visual: { ...initial.visual, fitMode: "auto", motionSpeed: 1.5 },

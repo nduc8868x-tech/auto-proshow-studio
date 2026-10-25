@@ -1,12 +1,14 @@
-# Bản 1.0.1: thư viện logo, chỉnh sub trên preview và xóa ảnh
+# Bản 1.0.2: sao chép dự án và mẫu Subscribe chia đều
+
+**Mới:** nút sao chép dự án; mặc định 7,00x và cỡ chữ 180 px cho dự án mới. Subscribe có Mẫu 1: 15 đoạn × 10s, X36/Y8/rộng29%; Mẫu 2: 5 đoạn × 2s, X25/Y11/rộng51%; đều tách nền xanh và lặp. Xem [hướng dẫn](docs/UPDATE-PROJECT-COPY-PRESETS.md).
 
 GitHub: [mã nguồn](https://github.com/nduc8868x-tech/auto-proshow-studio) · [tải bản portable Windows](https://github.com/nduc8868x-tech/auto-proshow-studio/releases/latest). Giải nén toàn bộ ZIP rồi mở `auto-proshow-studio.exe`. Mã nguồn gồm template, tài liệu, tests và fixture benchmark; bộ cài portable được lưu tại Releases.
 
-Bản portable mới nằm ở **release/2026-10-24-logo-preview/auto-proshow-studio-win32-x64/auto-proshow-studio.exe**. Đóng bản cũ rồi mở EXE mới để dùng các điều chỉnh mới.
+Bản portable mới nằm ở **release/2026-10-26-presets/auto-proshow-studio-win32-x64/auto-proshow-studio.exe**. Đóng bản cũ rồi mở EXE mới để dùng các điều chỉnh mới.
 Gói chuyển sang máy khác: **release/AutoProShowStudio-Windows-x64.zip**. Giải nén toàn bộ thư mục rồi mở EXE.
 
 - Ảnh: AVIF/JPG/JPEG/JFIF/PNG/WebP/GIF/BMP/ICO/SVG. Nhập file có báo số thành công và file lỗi; HEIC/TIFF cần chuyển đổi.
-- **Tốc độ chuyển động (toàn dự án)**: 0,00×–10,00×, mặc định dự án mới **3,00×**. Mức 0× dừng chuyển động. Chọn ảnh, cuộn tới **Ảnh đang chọn → Chuyển động**, bật **Tốc độ riêng cho ảnh này** để ghi đè. Giữ nguyên thời lượng ảnh, voice và video; dự án cũ giữ thiết lập đã lưu.
+- **Tốc độ chuyển động (toàn dự án)**: 0,00×–10,00×, mặc định dự án mới **7,00×**. Mức 0× dừng chuyển động. Chọn ảnh, cuộn tới **Ảnh đang chọn → Chuyển động**, bật **Tốc độ riêng cho ảnh này** để ghi đè. Giữ nguyên thời lượng ảnh, voice và video; dự án cũ giữ thiết lập đã lưu.
 - **Hiển thị ảnh** mặc định dự án mới là **Nền ảnh làm mờ**. Bấm **×** trên thumbnail để xóa ảnh, kể cả khi chưa nhập voice. Kéo ảnh ngay trên timeline sang trái/phải; vạch tím báo vị trí chèn. Thứ tự được lưu và giữ thiết lập riêng từng ảnh.
 - **Template Subscribe** dưới timeline: đặt playhead tại thời điểm cần chèn, bấm **＋ Mẫu Subscribe** để dùng GIF đã gửi có sẵn, tự tách nền xanh. Kéo đoạn để đổi lúc xuất hiện, kéo mép phải để đổi thời lượng. Bấm vào đoạn để chỉnh thời điểm/vị trí/kích thước, bật lặp hoặc xóa. Bấm **Chỉnh vị trí sub** trên preview để kéo vị trí hoặc kéo góc đổi kích thước, tự lưu khi thả chuột. Chỉnh số xong bấm **Lưu chỉnh sửa**. Các đoạn nằm cùng một hàng; chọn đoạn rồi **Sao chép / Dán tại playhead** hoặc **Ctrl+C / Ctrl+V** trong track. Có danh sách chọn đoạn khi chồng thời gian. Có **Nhập GIF khác…**, tùy chọn tách nền xanh. Xem docs/SUBSCRIBE-TEMPLATE.md.
 - Bên phải, cuộn tới **Tiêu đề & logo xuyên suốt**: bật dải trắng, nhập tiêu đề, bấm **＋ Thêm logo** để thêm một hoặc nhiều logo vào **Logo đã lưu**, dùng lại cho các dự án; có thể bỏ logo hiện tại. Chỉnh X/Y, chiều rộng/cao và cỡ chữ; chọn bố cục Trên/Giữa/Dưới. Bấm **Chỉnh vị trí** trên preview để kéo cả dải hoặc kéo góc để đổi kích thước. Logo đi cùng dải tiêu đề, cố định tại vị trí đã chọn suốt video.
@@ -14,7 +16,7 @@ Gói chuyển sang máy khác: **release/AutoProShowStudio-Windows-x64.zip**. Gi
 - Bấm **Thêm vào hàng đợi** cho từng dự án. Có thể tiếp tục sửa dự án khác; mỗi mục giữ bản chụp lúc thêm. Hủy từng mục hoặc tạm dừng sau video hiện tại. Hàng đợi được lưu trên đĩa.
 - Chế độ **Tự động GPU / CPU** tự kiểm tra máy đang dùng; NVIDIA NVENC nếu khả dụng, tự chuyển CPU khi không dùng được. Không khóa vào RTX 2060 SUPER.
 - **CPU tương thích** dùng cho máy không có GPU tương thích. GPU có thể dựng tối đa 8 frame đồng thời, giới hạn theo CPU/RAM/độ phân giải. Nền mờ được chuẩn bị một lần và cache dùng chung giữa các frame; tự dùng CSS blur nếu không tạo được cache. GPU dùng ANGLE và NVENC, vẫn cần CPU để điều phối và dựng nội dung.
-- Đóng gói bản này: `npm run package:portable -- release/2026-10-24-logo-preview`. Tạo ZIP: `npm run zip:portable -- -BuildDirectory release/2026-10-24-logo-preview`. Probe GPU: `npm run probe:gpu`.
+- Đóng gói bản này: `npm run package:portable -- release/2026-10-26-presets`. Tạo ZIP: `npm run zip:portable -- -BuildDirectory release/2026-10-26-presets`. Probe GPU: `npm run probe:gpu`.
 - Chi tiết bản hiện tại: docs/UPDATE-2026-10-24.md. Bố cục tiêu đề: docs/UPDATE-EDITOR-CONTROLS.md. Chưa kiểm tra máy Windows sạch tắt mạng hoặc video dài 10–20 phút.
 
 ---
@@ -25,7 +27,7 @@ Gói chuyển sang máy khác: **release/AutoProShowStudio-Windows-x64.zip**. Gi
 
 ## Chạy EXE
 
-Mở **release/2026-10-24-logo-preview/auto-proshow-studio-win32-x64/auto-proshow-studio.exe**.
+Mở **release/2026-10-26-presets/auto-proshow-studio-win32-x64/auto-proshow-studio.exe**.
 Giữ nguyên toàn bộ thư mục bên cạnh EXE, bao gồm resources, DLL và browser. Đây là bản portable, chưa có installer/signing.
 
 ## Phát triển trên Windows
@@ -65,7 +67,7 @@ Kiểm thử EXE (PowerShell, đường dẫn tuyệt đối):
 
 ```powershell
 Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
-& ".\release\2026-10-24-logo-preview\auto-proshow-studio-win32-x64\auto-proshow-studio.exe" --app-smoke "D:\tool edit\auto-proshow-studio\fixtures\generated"
+& ".\release\2026-10-26-presets\auto-proshow-studio-win32-x64\auto-proshow-studio.exe" --app-smoke "D:\tool edit\auto-proshow-studio\fixtures\generated"
 ```
 
 Kết quả kiểm thử nằm trong fixtures/generated: verification.json, packaged-result.json, electron-result.json, ảnh chụp editor và MP4 mẫu. File app-smoke-error.txt có thể là log từ lần kiểm tra thất bại trước đó; đối chiếu timestamp và result.json.

@@ -15,6 +15,7 @@ export function ProjectManager({
   onClose,
   onOpen,
   onCreate,
+  onDuplicate,
   onDeleted,
   onRenamed,
 }: {
@@ -23,6 +24,7 @@ export function ProjectManager({
   onClose: () => void;
   onOpen: (id: string) => Promise<void>;
   onCreate: () => Promise<void>;
+  onDuplicate: (id: string) => Promise<void>;
   onDeleted: (id: string) => Promise<void>;
   onRenamed: (id: string, name: string) => Promise<void>;
 }) {
@@ -268,6 +270,15 @@ export function ProjectManager({
                   </small>
                 </div>
                 <div className="project-actions">
+                  <button
+                    disabled={!!busy}
+                    aria-label={"Sao chép " + project.name}
+                    onClick={() =>
+                      void action(project.id, () => onDuplicate(project.id))
+                    }
+                  >
+                    Sao chép
+                  </button>
                   <button
                     disabled={!!busy}
                     onClick={() =>

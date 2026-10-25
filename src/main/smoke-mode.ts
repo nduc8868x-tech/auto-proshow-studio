@@ -12,6 +12,7 @@ import { renderVideo } from "../render-video";
 import { ProjectService } from "./project-service";
 import { testSubscribeUI, verifySubscribeOutput } from "./subscribe-smoke";
 import { testMediaLibraryUI } from "./media-library-smoke";
+import { testProjectCopyAndPresets } from "./project-presets-smoke";
 export async function runAppSmoke(
   win: BrowserWindow,
   service: ProjectService,
@@ -131,7 +132,8 @@ export async function runAppSmoke(
     assert.equal(partial.importReport?.errors.length, 1);
     const initial = await service.create(),
       id = initial.project.id;
-    assert.equal(initial.project.visual.motionSpeed, 3);
+    assert.equal(initial.project.visual.motionSpeed, 7);
+    assert.equal(initial.project.overlay.layout.fontSize, 180);
     assert.equal(initial.project.visual.fitMode, "contain-blur");
     await service.import(
       id,
@@ -231,7 +233,7 @@ export async function runAppSmoke(
       "(()=>{const e=document.querySelector('[aria-label=\"Tốc độ chuyển động toàn dự án\"]');return {min:e.min,max:e.max};})()",
     );
     assert.deepEqual(speedInput, { min: "0", max: "10" });
-    for (const value of [0, 10, 3]) {
+    for (const value of [0, 10, 7]) {
       await waitForIdle();
       await win.webContents.executeJavaScript(
         "(()=>{const e=document.querySelector('[aria-label=\"Tốc độ chuyển động toàn dự án\"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e," +
@@ -348,7 +350,15 @@ export async function runAppSmoke(
     await win.webContents.executeJavaScript(
       "Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('Quản lý dự án')).click()",
     );
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    for (let i = 0; i < 150; i++) {
+      if (
+        await win.webContents.executeJavaScript(
+          "!!document.querySelector('.project-card.current')",
+        )
+      )
+        break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     assert.ok(
       await win.webContents.executeJavaScript(
         "!!document.querySelector('.project-manager')",
@@ -489,6 +499,7 @@ export async function runAppSmoke(
     await capture("title-drag-editor.png");
     await waitForIdle();
     await testSubscribeUI(win, service, id, root);
+    await testProjectCopyAndPresets(win, service, id, root);
     const cacheStarted = Date.now();
     const renderSnapshot = await service.renderView(service.get(id));
     const cachePreparationMs = Date.now() - cacheStarted;
@@ -680,6 +691,8 @@ export async function runAppSmoke(
           projectId: id,
           outputPath,
           checks: [
+            "Header and manager project copies: separate IDs/files for photos, voice, logo and Subscribe frames; source unchanged; reopen and preview",
+            "Subscribe presets: 15x10s at 36/8/29 and 5x2s at 25/11/51; evenly spaced, green keyed, looped, append/replace and asset reuse",
             "Saved logo library: deduplication, cross-project UI reuse, project-owned copy and save/reopen",
             "Thumbnail image deletion before voice, timeline redistribution, last-image empty state, unchanged voice and retained source/snapshot media",
             "Subscribe native preview drag/resize autosave, shared timeline selection and geometry in exported frames",
@@ -687,7 +700,7 @@ export async function runAppSmoke(
             "Subscribe builtin GIF: all 61 frames, 2.03s, transparent green key and union crop",
             "Subscribe native pointer timeline move/resize, property edit, delete/reinsert and frame reuse",
             "Subscribe save/reopen, loop timing and exported pixels before/during/after interval",
-            "new project defaults: 3x and blurred background",
+            "new project defaults: 7x, 180px and blurred background",
             "motion range 0-10x including UI save at both boundaries",
             "native timeline mouse drag reorders images and preserves clip speed/voice duration",
             "compact project rows with creation/update times and deletion button",

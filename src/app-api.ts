@@ -48,6 +48,12 @@ export type AppAPI = {
     listener: (result: { data?: SceneProps; error?: string }) => void,
   ) => () => void;
   create: () => Promise<SceneProps>;
+  duplicateProject: (id: string) => Promise<SceneProps>;
+  addSubscribePreset: (
+    id: string,
+    preset: import("./shared/subscribe-presets").SubscribePresetId,
+    replace: boolean,
+  ) => Promise<SceneProps>;
   list: () => Promise<ProjectSummary[]>;
   renameProject: (id: string, name: string) => Promise<ProjectSummary>;
   deleteProject: (id: string) => Promise<{ deleted: boolean }>;

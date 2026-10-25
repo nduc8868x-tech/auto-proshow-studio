@@ -16,6 +16,12 @@ import { promisify, isDeepStrictEqual } from "node:util";
 import { isImageFilename, imageMime } from "../shared/media-formats";
 import { ImageDecoder } from "./image-decoder";
 import { LogoLibrary } from "./logo-library";
+import { planProjectCopy } from "../shared/duplicate-project";
+import {
+  buildSubscribePreset,
+  subscribePresets,
+  type SubscribePresetId,
+} from "../shared/subscribe-presets";
 import { z } from "zod";
 import { verifiedProjectFolder } from "./project-storage";
 import type { ProjectSummary } from "../app-api";
@@ -152,13 +158,30 @@ export class ProjectService {
     file: string,
     startFrame: number,
     removeGreen: boolean,
+    preset?: { id: SubscribePresetId; replace: boolean },
   ) {
     const p = structuredClone(this.get(id));
     if (!p.clips.length)
       throw Error("Hãy thêm ảnh và voice trước khi chèn template");
     z.number().int().nonnegative().parse(startFrame);
     z.boolean().parse(removeGreen);
-    if (p.subscribeClips.length >= 100)
+    if (preset) {
+      z.enum(["fifteen", "five"]).parse(preset.id);
+      z.boolean().parse(preset.replace);
+      removeGreen = true;
+      buildSubscribePreset(
+        preset.id,
+        randomUUID(),
+        p.video.fps,
+        p.video.totalFrames,
+        randomUUID,
+      );
+    }
+    if (
+      (preset?.replace ? 0 : p.subscribeClips.length) +
+        (preset ? subscribePresets[preset.id].count : 1) >
+      100
+    )
       throw Error("Tối đa 100 đoạn Subscribe trong một dự án");
     if ((await stat(file)).size > 50 * 1024 ** 2)
       throw Error("GIF vượt 50 MB, hãy dùng template nhỏ hơn");
@@ -208,22 +231,35 @@ export class ProjectService {
         p.video.width,
         p.video.height,
       );
-      p.subscribeClips.push({
-        id: randomUUID(),
-        assetId: asset.id,
-        startFrame: start,
-        durationFrames: Math.min(
-          p.video.totalFrames - start,
-          Math.ceil(
-            (asset.frameDurationsMs.reduce((a, b) => a + b, 0) * p.video.fps) /
-              1000,
+      if (preset) {
+        const clips = buildSubscribePreset(
+          preset.id,
+          asset.id,
+          p.video.fps,
+          p.video.totalFrames,
+          randomUUID,
+        );
+        p.subscribeClips = preset.replace
+          ? clips
+          : [...p.subscribeClips, ...clips];
+      } else
+        p.subscribeClips.push({
+          id: randomUUID(),
+          assetId: asset.id,
+          startFrame: start,
+          durationFrames: Math.min(
+            p.video.totalFrames - start,
+            Math.ceil(
+              (asset.frameDurationsMs.reduce((a, b) => a + b, 0) *
+                p.video.fps) /
+                1000,
+            ),
           ),
-        ),
-        x: geometry.x,
-        y: geometry.y,
-        width: Math.max(5, geometry.width),
-        loop: false,
-      });
+          x: geometry.x,
+          y: geometry.y,
+          width: Math.max(5, geometry.width),
+          loop: false,
+        });
       p.updatedAt = new Date().toISOString();
       validateTimeline(p);
       await this.persist(p);
@@ -369,6 +405,36 @@ export class ProjectService {
     await this.persist(next);
     if (this.opened.has(id)) this.opened.set(id, next);
     return this.summary(next);
+  }
+  async duplicateProject(id: string) {
+    const checked = await verifiedProjectFolder(this.root, id);
+    const source = structuredClone(this.opened.get(id) ?? checked.project);
+    const plan = planProjectCopy(source, randomUUID(), randomUUID);
+    const folder = this.folder(plan.project.id);
+    await mkdir(folder);
+    try {
+      for (const file of plan.files) {
+        const target = path.resolve(folder, file.target);
+        if (!target.startsWith(path.resolve(folder) + path.sep))
+          throw Error("Đường dẫn bản sao không hợp lệ");
+        await mkdir(path.dirname(target), { recursive: true });
+        await copyFile(await this.assetPath(source, file.source), target);
+      }
+      await this.persist(plan.project);
+      this.opened.set(plan.project.id, plan.project);
+      return await this.view(plan.project);
+    } catch (error) {
+      this.opened.delete(plan.project.id);
+      const actual = await realpath(folder),
+        root = await realpath(this.root);
+      if (
+        path.dirname(actual).toLowerCase() === root.toLowerCase() &&
+        path.basename(actual) === plan.project.id &&
+        actual !== checked.folder
+      )
+        await rm(actual, { recursive: true, force: true });
+      throw error;
+    }
   }
   async assertDeletable(id: string) {
     if (this.lifecycle.isBusy(id))

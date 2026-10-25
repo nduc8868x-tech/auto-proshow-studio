@@ -12,6 +12,10 @@
 
 # Implemented since initial TODO
 
+- Project duplication from header and project manager, with independent IDs and referenced media/frame copies; existing settings/timings preserved.
+- New-project defaults: 180px title font and 7x motion speed. Explicit saved settings remain unchanged.
+- Built-in evenly distributed Subscribe presets: 15x10s at X36/Y8/width29 and 5x2s at X25/Y11/width51; both green keyed and looping, with append/replace controls and fixed-duration validation.
+
 - Queue for multiple videos, persisted snapshots, pause/resume, per-job cancel and continued processing after failure.
 - GPU auto mode, actual NVENC probe, CPU fallback and adaptive parallel frame rendering.
 - Editable full-video title and replaceable logo, with movable/resizable white strip and configurable font size.

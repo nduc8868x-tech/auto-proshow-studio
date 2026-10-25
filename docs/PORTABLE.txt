@@ -11,7 +11,7 @@ Click a thumbnail in 'Logo da luu' to reuse it in this or another project.
 Saved logos live in the user's AutoProShowStudio/logo-library folder. Projects keep their own active logo copy.
 Use Edit Position above the preview to drag the strip or resize its corner handle.
 The sidebar also has X/Y, width/height, font size and top/middle/bottom presets.
-Motion speed: global 0.00x-10.00x, default 3.00x for NEW projects; 0 stops motion.
+Motion speed: global 0.00x-10.00x, default 7.00x for NEW projects; 0 stops motion.
 New projects default to blurred-photo background. Existing saved settings are preserved.
 Drag photos left/right on the timeline; the purple marker shows the insertion position.
 Click X on a photo thumbnail to remove it from the project, including before adding voice.
@@ -51,3 +51,9 @@ Close confirmation protects pending jobs; queued items reopen paused and can be 
 
 This unsigned build was tested on the development Windows PC with actual NVIDIA NVENC and CPU exports.
 A clean-machine physically-offline test and long-video stress benchmarks remain outstanding.
+
+New projects use 180px title font (1080p basis), subject to optional long-title auto-fit.
+Copy Project is available in the header and Project Manager. Copies keep settings but own their media and IDs.
+Subscribe preset 1: 15 clips x 10s, X36%, Y8%, width29%; preset 2: 5 clips x 2s, X25%, Y11%, width51%.
+Both use the built-in green-keyed GIF and loop. Starts are evenly spaced across the video; durations stay fixed.
+By default presets append. Check Replace existing subs to replace the track. Minimum video length: 10s / 2s.

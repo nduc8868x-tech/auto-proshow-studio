@@ -1,6 +1,10 @@
 import { useRef, useState, type PointerEvent } from "react";
 import type { Project } from "../shared/project";
 import {
+  subscribePresets,
+  type SubscribePresetId,
+} from "../shared/subscribe-presets";
+import {
   fitSubscribeClip,
   pasteSubscribeClip,
   subscribeGeometry,
@@ -17,6 +21,7 @@ export function SubscribeTimeline({
   onInsert,
   selectedId,
   onSelect,
+  onPreset,
 }: {
   project: Project;
   frame: number;
@@ -28,10 +33,12 @@ export function SubscribeTimeline({
   onInsert: (clip: SubscribeClip) => Promise<boolean>;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onPreset: (id: SubscribePresetId, replace: boolean) => void;
 }) {
   const selected = selectedId,
     setSelected = onSelect;
   const [removeGreen, setRemoveGreen] = useState(true),
+    [replacePresets, setReplacePresets] = useState(false),
     [copied, setCopied] = useState<SubscribeClip | null>(null),
     [message, setMessage] = useState("");
   const pasting = useRef(false);
@@ -206,6 +213,60 @@ export function SubscribeTimeline({
         >
           Dán tại playhead
         </button>
+      </div>
+      <div className="subscribe-presets" aria-label="Mẫu Subscribe chia đều">
+        {(
+          Object.entries(subscribePresets) as [
+            SubscribePresetId,
+            (typeof subscribePresets)[SubscribePresetId],
+          ][]
+        ).map(([id, preset]) => {
+          const tooShort = project.video.totalFrames < preset.seconds * fps;
+          const full =
+            !replacePresets &&
+            project.subscribeClips.length + preset.count > 100;
+          return (
+            <button
+              key={id}
+              type="button"
+              disabled={busy || !project.clips.length || tooShort || full}
+              aria-label={"Áp dụng " + preset.label + " Subscribe"}
+              title={
+                tooShort
+                  ? `Cần video dài ít nhất ${preset.seconds}s`
+                  : full
+                    ? "Tối đa 100 sub; bật thay sub hiện có hoặc xóa bớt"
+                    : "Chia đều từ đầu đến cuối video · Tách nền xanh · Lặp animation"
+              }
+              onClick={() => {
+                setRemoveGreen(true);
+                onPreset(id, replacePresets);
+              }}
+            >
+              <b>
+                {preset.label} · {preset.count} sub × {preset.seconds}s
+              </b>
+              <small>
+                Ngang {preset.x}% · Dọc {preset.y}% · Kích thước {preset.width}%
+              </small>
+            </button>
+          );
+        })}
+        <label className="subscribe-key">
+          <input
+            type="checkbox"
+            aria-label="Thay sub hiện có khi áp dụng mẫu"
+            checked={replacePresets}
+            disabled={busy}
+            onChange={(e) => setReplacePresets(e.target.checked)}
+          />
+          Thay các sub hiện có
+        </label>
+        <small className="hint">
+          Hai mẫu luôn tách nền xanh và lặp animation. Mặc định thêm vào track;
+          bật tùy chọn để thay toàn bộ sub. Video ngắn có thể khiến các đoạn
+          chồng thời gian. Mẫu 1 cần ít nhất 10s, mẫu 2 cần ít nhất 2s.
+        </small>
       </div>
       <div className="subscribe-tools">
         <label>

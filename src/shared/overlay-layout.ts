@@ -3,7 +3,7 @@ export const defaultOverlayLayout = {
   y: 78.5,
   width: 95,
   height: 14.5,
-  fontSize: 56,
+  fontSize: 180,
   autoFit: true,
 };
 export type OverlayLayout = typeof defaultOverlayLayout;

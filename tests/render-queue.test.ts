@@ -126,7 +126,7 @@ test("old projects gain disabled overlay and portable auto export defaults", () 
   assert.equal(parsed.overlay.title, "");
   assert.equal(parsed.overlay.logo, null);
   assert.equal(parsed.overlay.layout.y, 78.5);
-  assert.equal(parsed.visual.motionSpeed, 3);
+  assert.equal(parsed.visual.motionSpeed, 7);
   assert.equal(parsed.exportSettings.mode, "auto");
 });
 test("AVIF is included and actual signatures are used", () => {

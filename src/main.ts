@@ -139,6 +139,22 @@ app
     );
     await queue.restore();
     handle("create", () => service.create());
+    handle("duplicate-project", (id: string) => service.duplicateProject(id));
+    handle(
+      "subscribe-preset",
+      (
+        id: string,
+        preset: import("./shared/subscribe-presets").SubscribePresetId,
+        replace: boolean,
+      ) =>
+        service.addSubscribe(
+          id,
+          path.join(app.getAppPath(), "templates/subscribe.gif"),
+          0,
+          true,
+          { id: preset, replace },
+        ),
+    );
     handle("list", () => service.list());
     handle("rename-project", (id: string, name: string) =>
       service.renameProject(id, name),

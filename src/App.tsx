@@ -167,6 +167,15 @@ export function App() {
       setFrame(0);
     }
   };
+  const duplicateProject = async (id: string) => {
+    player.current?.pause();
+    if (p) await save(p);
+    setData(await api.duplicateProject(id));
+    setSelected(null);
+    setFrame(0);
+    await refresh();
+    setManagerOpen(false);
+  };
   function reorder(target: string, edge: "before" | "after" = "before") {
     if (!p || busy || !drag.current || drag.current === target) return;
     const images = reorderImages(p.images, drag.current, target, edge);
@@ -217,6 +226,12 @@ export function App() {
           onClick={() => p && void run(() => save(p))}
         >
           Lưu
+        </button>
+        <button
+          disabled={!p || busy}
+          onClick={() => p && void run(() => duplicateProject(p.id))}
+        >
+          ⧉ Sao chép dự án
         </button>
         <button
           className="primary"
@@ -918,6 +933,25 @@ export function App() {
             busy={busy}
             selectedId={selectedSubscribe}
             onSelect={setSelectedSubscribe}
+            onPreset={(preset, replace) =>
+              void run(async () => {
+                player.current?.pause();
+                await save(p);
+                const result = await api.addSubscribePreset(
+                  p.id,
+                  preset,
+                  replace,
+                );
+                setData(result);
+                const first =
+                  result.project.subscribeClips[
+                    replace ? 0 : p.subscribeClips.length
+                  ];
+                setSelectedSubscribe(first?.id ?? null);
+                player.current?.seekTo(first?.startFrame ?? 0);
+                await refresh();
+              })
+            }
             onInsert={async (clip) => {
               let saved = false;
               await run(async () => {
@@ -1044,6 +1078,7 @@ export function App() {
           onClose={() => setManagerOpen(false)}
           onOpen={openProject}
           onCreate={createProject}
+          onDuplicate={duplicateProject}
           onDeleted={deletedProject}
           onRenamed={async (id, name) => {
             setData((current) =>

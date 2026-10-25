@@ -38,6 +38,9 @@ const api: AppAPI = {
     };
   },
   create: () => ipcRenderer.invoke("app:create"),
+  duplicateProject: (id) => ipcRenderer.invoke("app:duplicate-project", id),
+  addSubscribePreset: (id, preset, replace) =>
+    ipcRenderer.invoke("app:subscribe-preset", id, preset, replace),
   list: () => ipcRenderer.invoke("app:list"),
   renameProject: (id, name) =>
     ipcRenderer.invoke("app:rename-project", id, name),
